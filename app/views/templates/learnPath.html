@@ -1,0 +1,1631 @@
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-sanitize.min.js"></script>
+<div ng-controller="learnPathController" id="controller">
+<section class="content-header">
+    <h1>
+        <i class="fa fa-sitemap"></i> {{phrase.learnpath}}
+    </h1>
+</section>
+<!-- =============================== Learnpath List ==================================== -->
+
+<section class="content" ng-show="views.list">
+  <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="changeView('add')" class="floatRTL btn btn-success btn-flat pull-right marginBottom15">{{phrase.addlearnpath}}</a>
+  <div class="box col-xs-12">
+      <div class="box-header">
+          <h3 class="box-title col-md-3">{{phrase.listlearnpath}}</h3>
+          <div class="col-md-9">
+          </div>
+      </div>
+      <div class="box-body table-responsive">
+          <table class="table table-hover">
+              <tbody>
+                  <tr ng-if="userRole == 'admin' || userRole == 'teacher'">
+                      <td>
+                      </td>
+                      <td>
+                          <div class="form-group">
+                               <label>{{ phrase.Subjects }}</label>
+                               <select class="form-control filterselect" ng-model="subjectText" name="table_search">
+                                <option value=""></option>
+                                <option ng-repeat="subjectOne in allsubject" value="{{subjectOne.subjectTitle}}">{{subjectOne.subjectTitle}}</option>
+                              </select>
+                           </div>
+                      </td>
+                      <td>
+                          <div class="form-group">
+                               <label>{{ phrase.yearlevel }}</label>
+                               <select class="form-control filterselect" ng-model="yearlevelText" name="table_search">
+                                <option value=""></option>
+                                <option ng-repeat="level in yearlevels" value="{{level.title}}">{{level.title }}</option>
+                              </select>
+                           </div>
+                      </td>
+                      <td>
+                          <div class="form-group">
+                               <label>{{ phrase.level }}</label>
+                               <select class="form-control filterselect" ng-model="levelText" name="table_search">
+                                <option value=""></option>
+                                <option ng-repeat="level in gradelevels" value="{{level.gradeName}}">{{level.gradeName }}</option>
+                              </select>
+                           </div>
+                      </td>
+                      <td>
+                          <div class="form-group">
+                               <label>{{ phrase.Status }}</label>
+                               <select class="form-control filterselect" data-style="btn-inverse" ng-model="statusText" name="table_search">
+                                   <option value=""></option>
+                                   <option value="On">Active</option>
+                                   <option value="Off">Inactive</option>
+                               </select>
+                           </div>
+                      </td>
+                      <td></td>
+                  </tr>
+                  <tr>
+                  <th>{{phrase.learnpath}}</th>
+                  <th>{{phrase.Subjects}}</th>
+                  <th ng-if="userRole == 'admin' || userRole == 'teacher'">{{phrase.yearlevel}}</th>
+                  <th ng-if="userRole == 'admin' || userRole == 'teacher'">{{phrase.level}}</th>
+                  <th ng-if="userRole == 'admin' || userRole == 'teacher'">{{phrase.Status}}</th>
+                  <th>{{phrase.Operations}}</th>
+              </tr>
+              <tr ng-repeat="lp in learnpaths | filter:subjectText | filter:levelText | filter:yearlevelText |  filter:statusText">
+                  <td>{{lp.lpTitle}}</td>
+                  <td>
+                     <span> {{ lp.subject.subjectTitle }}</span>
+                  </td>
+                  <td ng-if="userRole == 'admin' || userRole == 'teacher'">
+                     {{ lp.yearlevel }} 
+                  </td>
+                  <td ng-if="userRole == 'admin' || userRole == 'teacher'">
+                      {{ lp.gradelevel }} <br>
+                      <div ng-if="userRole == 'admin' || userRole == 'teacher'"><span  ng-if="lp.is_default == '1'"><b>{{phrase.default}}</b></span></div>
+                      
+                  </td>
+                  <td ng-if="userRole == 'admin' || userRole == 'teacher'">
+                      <span ng-if="lp.status == 'On'">{{phrase.Active}}</span>
+                      <span ng-if="lp.status == 'Off'">{{phrase.Inactive}}</span>
+                  </td>
+                  <td>
+                    <a ng-if="userRole == 'student'" ng-click="viewLearnPath(lp.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.viewlearnpath}}" tooltip><i class="fa fa-eye"></i></a>
+                    <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="edit(lp.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.Edit}}" tooltip><i class="fa fa-pencil"></i></a>
+                    <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="remove(lp,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.Remove}}" tooltip><i class="fa fa-trash-o"></i></a>
+                  </td>
+              </tr>
+              <tr ng-if="userRole != 'student'" ng-show="!learnpaths.length"><td class="noTableData" colspan="7">{{phrase.nolearnpath}}</td></tr>
+          </tbody></table>
+      </div>
+      
+      
+  </div>
+</section>
+
+<!-- =============================== Add Learnpath ==================================== -->
+
+<section class="content" ng-show="views.add">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelAdd}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.addlearnpath}}</h3>
+    </div>
+    <div class="box-body table-responsive learnpath">
+      <form class="form-horizontal" name="addLearnPath" role="form" ng-submit="saveAdd()" novalidate>
+        <div class="form-group" ng-class="{'has-error': addLearnPath.lpTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.learnpathtitle}}* </label>
+          <div class="col-sm-10">
+            <input type="text" name="lpTitle" ng-model="form.lpTitle" class="form-control" required placeholder="{{phrase.learnpathtitle}}">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': addLearnPath.lpClasses.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-change="checkToggle();subjectList();levelpathlevel();selectModules()" name="lpClasses[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.lpClasses" name="lpClasses" required="">
+          </div>
+        </div>
+          
+        <div id="gradelevelset" class="form-group">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.gradelevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.gradelevel" required name="gradelevel" ng-change="selectModules()">
+              <option ng-repeat="level in gradelevels" value="{{level.gid}}">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="yearlevelset" class="form-group">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.yearlevel" name="yearlevel" required ng-change="selectModules()">
+              <option ng-repeat="yearlevel in yearlevels" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+                    
+        <div class="form-group" ng-class="{'has-error': addLearnPath.subject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select id="subject" class="form-control" ng-model="form.subject" required name="subject" ng-change="selectModules()">
+              <option ng-repeat="subjectOne in subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.selectmodules}}*</label>
+          <div class="col-sm-10">
+            <div class="col-md-3">
+                <select id="modules" class="form-control" ng-model="form.modules" name="modules">
+                  <option ng-repeat="module in modules"  ng-selected="module.id == moduleadded.id" value="{{module.id}}">{{module.moduleTitle}}</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <a class="btn btn-danger btn-flat pull-left marginBottom15 ng-binding" ng-click="addModuleData()">{{phrase.addmodule}}</a>
+                <a class="btn btn-success btn-flat pull-left marginleftright20 ng-binding" ng-click="addModule()">{{phrase.addnewmodule}}</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label"></label>
+          <div class="col-sm-10">
+            <div id="setsequence">
+            <div class="panel panel-default">
+
+              <div class="panel-body">
+                  <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{phrase.modulename}}</th>
+                            <th class="sortorder">{{phrase.sortorder}}</th>
+                            <th>{{phrase.Operations}}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="moduleslist">
+                       <tr ng-repeat="mData in form.moduleList" class="dragdrop" id="add-{{$index}}-{{mData.mId}}">
+                                <td>
+                                        <span id="add-{{mData.mId}}" onclick="moduleEdit(this.id)">{{ mData.mtitle }}</span>
+                                </td>
+                                <td id="add-{{$index}}-td">
+                                        <input type="hidden" value="{{ mData.mId }}" id="add-mid-{{mData.mId}}" class="form-control mid"  />
+                                        <span id="add-{{$index}}-{{mData.mId}}" onclick="lpmoveblockdown(this.id,'add')" class="movearrow movedown"><i class="fa fa-angle-down"></i></span>
+                                        <span id="add-{{$index}}-{{mData.mId}}" onclick="lpmoveblockup(this.id,'add')" class="movearrow moveup"><i class="fa fa-angle-up"></i></span>
+                                        <input type="hidden" value="{{ $index }}" id="editorder-{{mData.mId}}" class="form-control sortorder" ng-blur="editModuleSort(mData,index)" />
+                                </td>
+                                <td>
+                                        <input type="hidden" value="{{mData}}" id="add-fulldata-{{$index}}" />
+                                        <a id="addremove-{{mData.mId}}" onclick="removeModule(this.id)" class="label bg-aqua">{{phrase.Remove}}</a>
+                                </td>
+                        </tr>
+                    </tbody>
+                    
+                </table>
+                  </div>
+                  <!-- /.table-responsive -->
+              </div>
+              <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+
+          </div>
+             
+        </div>
+        </div>
+        
+        <div date-picker selector=".datemask" ></div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" ng-disabled="addLearnPath.$invalid">{{phrase.addlearnpath}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== Edit Learnpath ==================================== -->
+
+<section class="content" ng-show="views.edit">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelEdit}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.editlearnpath}}</h3>
+    </div>
+    <div class="box-body table-responsive learnpath">
+      <form class="form-horizontal" name="editLeanPath" role="form" ng-submit="saveEdit()" novalidate>
+        <div class="form-group">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.learnpathtitle}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="lpTitle" ng-model="form.lpTitle" class="form-control" placeholder="Learn Path Title">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editLeanPath.lpClasses.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-checked="class.selected == 'selected'" ng-model="class.selected" ng-change="checkToggle();subjectList();levelpathlevel();selectModules()" name="lpClasses[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{class.id}}" ng-model="form.lpClasses" name="lpClasses" required="">
+          </div>
+        </div>
+          
+        <div id="gradelevelset" class="form-group">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.gradelevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.gradelevel" name="gradelevel" required ng-change="selectModules()">
+              <option ng-repeat="level in gradelevels" ng-selected="level.gid == form.gradelevel" value="{{level.gid}}">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="yearlevelset" class="form-group">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.yearlevel" name="yearlevel" required ng-change="selectModules()">
+              <option ng-repeat="yearlevel in yearlevels" ng-selected="yearlevel.id == form.levelValue" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+                 
+        <div class="form-group" ng-class="{'has-error': editLeanPath.subject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select id="subject" class="form-control" ng-model="form.subject" required name="subject" ng-change="selectModules()">
+              <option ng-repeat="subjectOne in subject" ng-selected="subjectOne.id == form.subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editLeanPath.status.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Status}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.status" required name="status">
+              <option ng-selected="form.status == 1" value="1">Active</option>
+              <option ng-selected="form.status == 0" value="0">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editLeanPath.modules.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.selectmodules}} *</label>
+          <div class="col-sm-10">
+            <div class="col-md-3">
+                <select id="modules" class="form-control" ng-model="form.modules" name="modules">
+                  <option ng-repeat="module in modules"  ng-selected="module.id == moduleadded.id" value="{{module.id}}">{{module.moduleTitle}}</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <a class="btn btn-danger btn-flat pull-left marginBottom15 ng-binding" ng-click="addModuleData()">{{phrase.addmodule}}</a>
+                <a class="btn btn-success btn-flat pull-left marginleftright20 ng-binding" ng-click="addModule()">{{phrase.addnewmodule}}</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label"></label>
+          <div class="col-sm-10">
+
+            <div id="setsequence">
+            <div class="panel panel-default">
+              <!-- /.panel-heading -->
+              <div class="panel-body">
+                  <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                         <tr>
+                            <th>{{phrase.modulename}}</th>
+                            <th class="sortorder">{{phrase.sortorder}}</th>
+                            <th>{{phrase.Operations}}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="moduleslist">
+                        <tr ng-repeat="mData in form.moduleList" class="dragdrop" id="edit-{{$index}}-{{mData.mId}}">
+                            <td>
+
+                                <span id="edit-{{mData.mId}}" onclick="moduleEdit(this.id)">{{ mData.mtitle }}</span>
+                            </td>
+                            <td id="edit-{{$index}}-td">
+                                
+                                <input type="hidden" value="{{ mData.mId }}" id="edit-mid-{{mData.mId}}" class="form-control mid"  />
+                                <span id="edit-{{$index}}-{{mData.mId}}" onclick="lpmoveblockdown(this.id,'edit')" class="movearrow movedown"><i class="fa fa-angle-down"></i></span>
+                                <span id="edit-{{$index}}-{{mData.mId}}" onclick="lpmoveblockup(this.id,'edit')" class="movearrow moveup"><i class="fa fa-angle-up"></i></span>
+                                <input type="hidden" value="{{$index}}" id="editorder-{{mData.mId}}" class="form-control sortorder" ng-blur="editModuleSort(mData,index)" />
+                            </td>
+                            <td>
+                                <input type="hidden" value="{{mData}}" id="edit-fulldata-{{$index}}" />
+                                <a id="editremove-{{mData.mId}}" onclick="removeModule(this.id)" class="label bg-aqua">{{phrase.Remove}}</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                    
+                </table>
+                  </div>
+                  <!-- /.table-responsive -->
+              </div>
+              <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+
+          </div>
+             
+        </div>
+        </div>
+          
+        
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" ng-disabled="editLeanPath.$invalid">{{phrase.editlearnpath}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== Learnpathset ==================================== -->
+
+<section class="content" ng-show="views.learnPathSet">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <div class="box col-xs-12 learpath-header">
+    <div class="row">
+        <div class="box-header">
+            <div class="col-md-6">
+                <h3 class="box-title"><b>{{phrase.learnpath}}:</b> {{ form.lpTitle }}</h3>
+            </div>
+            <div class="col-md-6">
+                <span class="pull-right"><h3 class="box-title"><b>{{phrase.Subject}}:</b> {{ form.subject.subjectTitle }}</h3></span>
+            </div>
+        </div>
+    </div>
+  </div>
+  
+  <div class="modulesgroups">
+        <div class="box col-xs-12 modulesets" ng-repeat="mData in form.moduleList">
+            <div class="row">
+            <section class="content-header">
+            <h1>
+                <i class="fa fa-sitemap"></i> {{ mData.mtitle }}
+            </h1>
+            </section>   
+           <div class="box-body table-responsive">
+                <table class="table table-hover listview">
+                    <tr>
+                        <th>{{phrase.name}}</th>
+                        <th>{{phrase.Operations}}</th>
+                    </tr>
+                    <tbody id="listdata">
+                    <tr ng-repeat="mdlist in mData.modulesetlist" data-order="{{mdlist.assorder}}" >
+                        <td>
+                            <div ng-if="mdlist.setid =='assid'" id="edit-{{mdlist.assId}}">{{ mdlist.AssignTitle }}</div>
+                            <div ng-if="mdlist.setid =='oexid'" id="edit-{{mdlist.oexId}}">{{ mdlist.examTitle }}</div>
+                        </td>
+                        <td>
+                          <a ng-if="mdlist.setid =='assid'" ng-click="viewAssignment(mdlist.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.viewassignment}}" tooltip><i class="fa fa-eye"></i></a> 
+                          <a ng-if="mdlist.setid =='oexid'" ng-if="userRole == 'student'" ng-click="take(mdlist.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.takeExam}}" tooltip><i class="fa fa-list-alt"></i></a>
+
+                          <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="listAnswers(assignment.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.viewAnswers}}" tooltip><i class="fa fa-check"></i></a>
+
+                          <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="edit(assignment.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.Edit}}" tooltip><i class="fa fa-pencil"></i></a>
+                          <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="remove(assignment,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.Remove}}" tooltip><i class="fa fa-trash-o"></i></a>
+                          <a ng-if="mdlist.setid =='assid'" ng-if="userRole == 'student'" ng-click="AssgnSchedule(mdlist.id,lpid)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-calendar"></i></a>
+                          <a ng-if="mdlist.setid =='assid'" ng-click="removeAssgnSchedule(mdlist,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.removeschedule}}" tooltip><i class="fa fa-calendar"></i></a>
+                          <a ng-if="mdlist.setid =='oexid'" ng-click="OnExSchedule(mdlist.id,form.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-calendar"></i></a>  
+                          <a ng-if="mdlist.setid =='oexid'" ng-click="removeOnexSchedule(mdlist,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.removeschedule}}" tooltip><i class="fa fa-calendar"></i></a>
+                          
+                          <a ng-if="mdlist.setid =='assid' && mdlist.gradefeedback =='1'" ng-click="viewGradeFeedback(mdlist.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.viewgradefeedback}}" tooltip><i class="fa fa-bar-chart"></i></a> 
+                        </td>
+                    </tr>
+                    
+                </tbody></table>
+            </div>
+                
+                
+            </div>
+        </div>        
+  </div>
+</section>
+
+
+<!-- =============================== Take online exam ==================================== -->
+
+<section class="content" ng-show="views.take">
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.takeExam}} : {{takeData.examTitle}} [{{takeData.examDescription}}]</h3>
+        <timer autostart="false" ng-if="takeData.timeLeft != '0'" id="onlineExamTimer" countdown="1000" interval="1000" finish-callback="finishExam()">Time Remaining : {{hours}}:{{minutes}}:{{seconds}}</timer>
+    </div>
+    <div class="box-body table-responsive">
+
+      <form class="form-horizontal" name="takeQuestions" role="form" ng-submit="submitExam()" novalidate>
+
+        <div class="row">
+          <div class="col-md-12" ng-repeat="question in takeData.examQuestion">
+            <div class="box box-info" >
+              <div class="box-header">
+                  <h3 class="box-title">{{question.title}}</h3>
+              </div>
+              <div class="box-body">
+                <div class="form-group">
+                  <div class="col-sm-12" ng-show="!question.type || question.type == 'radio'">
+                    <div class="radio" ng-show="question.ans1">
+                      <label>
+                        <input type="radio" ng-model="question.answer" value="1"> {{question.ans1}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans2">
+                      <label>
+                        <input type="radio" ng-model="question.answer" value="2"> {{question.ans2}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans3">
+                      <label>
+                        <input type="radio" ng-model="question.answer" value="3"> {{question.ans3}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans4">
+                      <label>
+                        <input type="radio" ng-model="question.answer" value="4"> {{question.ans4}}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-12" ng-show="question.type && question.type == 'check'">
+                    <div class="radio" ng-show="question.ans1">
+                      <label>
+                        <input type="checkbox" ng-model="question.answer1" value="1"> {{question.ans1}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans2">
+                      <label>
+                        <input type="checkbox" ng-model="question.answer2" value="2"> {{question.ans2}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans3">
+                      <label>
+                        <input type="checkbox" ng-model="question.answer3" value="3"> {{question.ans3}}
+                      </label>
+                    </div>
+                    <div class="radio" ng-show="question.ans4">
+                      <label>
+                        <input type="checkbox" ng-model="question.answer4" value="4"> {{question.ans4}}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-sm-12" ng-show="question.type && question.type == 'text'">
+                      <input type="text" name="question.answer" ng-model="question.answer" class="form-control" placeholder="">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" ng-disabled="takeQuestions.$invalid">{{phrase.submitAnswers}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== Assignment Related to Learnpath ==================================== -->
+
+<section class="content" ng-show="views.viewAssignment">
+  <a ng-click="viewLearnPath(lpid)" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.Return}}</a>
+  <div class="box col-xs-12 viewAssignment-header">
+    <div class="row">
+        <div class="box-header">
+            <div class="col-md-4">
+                <h3 class="box-title"><b>{{phrase.Assignments}}:</b> {{ assignmentData.AssignTitle }}</h3>
+            </div>
+            <div class="col-md-3">
+                <h3 class="box-title"><b>{{phrase.Subject}}:</b> {{ assignmentData.subject }}</h3>
+            </div>
+            <div ng-if="assignmentData.AssignFile !=''">
+                <h3 class="box-title"><b>Download:</b></h3> <a target="_blank" href="{{'assignments/download/'+assignmentData.id}}" type="button" class="btn btn-info btn-flat" title="{{phrase.Download}}" tooltip><i class="fa fa-cloud-download"></i></a>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="box col-xs-12">
+    <div class="box-body table-responsive">
+        <h3 class="box-title">{{phrase.Description}}</h3>
+        
+        <div class="descriptions">
+            <div ng-bind-html="assignmentContent"></div>
+        </div>
+    </div>
+  </div>
+  
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.uploadAnswer}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="uploadDorm" role="form" ng-upload="saveAnswer(content)" method="post" action="{{'assignments/upload/' + assignmentData.id}}" novalidate>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.userNotes}}</label>
+          <div class="col-sm-10">
+              <textarea name="AssignDescription" class="form-control" ng-model="form.AssignDescription" ng-change="textdraft(assignmentData.id)" userNotes="Answers notes" ck-editor></textarea><br>
+              <div class="pull-right savetodraft"><div ng-if="savetodraft == 'saved'">{{phrase.savetodraft}}</div></div>
+                
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.answerFile}}</label>
+          <div class="col-sm-10">
+            <input type="file" ng-model="answerFile" name="fileName">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="submit" class="btn btn-default" ng-disabled="uploadDorm.$invalid">{{phrase.uploadAnswer}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== Add Module to learnpath ==================================== -->
+
+<section id="addnewmodule" class="addnewmodule"> 
+ <div class="box col-xs-12">
+     <a ng-click="closeModule()" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15"><i class="fa fa-times"></i></a>
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.addnewmodule}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="addmodule" role="form" ng-submit="saveAdd()" novalidate>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.userNotes}}</label>
+         <div class="col-sm-10">
+            <input type="text" name="moduleTitle" ng-model="form.moduleTitle" class="form-control" required placeholder="{{phrase.moduletitle}}">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': addmodule.mdClasses.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-change="checkToggle();modsubjectList();modlevelpathlevel()" name="lpClasses[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.modClasses" name="modClasses" required="">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': addmodule.subject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addmodSubject" required name="addmodSubject">
+              <option ng-repeat="subjectOne in subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="gradelevelset" class="form-group" ng-class="{'has-error': addmodule.gradelevel.$invalid}">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.gradelevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addmodgradelevel" name="addmodgradelevel" required>
+              <option ng-repeat="level in gradelevels" value="{{level.gid}}">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="yearlevelset" class="form-group" ng-class="{'has-error': addmodule.yearlevel.$invalid}">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addmodylevel" name="addmodylevel" required>
+              <option ng-repeat="yearlevel in yearlevels" ng-selected="yearlevel.id == form.levelValue" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>  
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="button" ng-click="addnewModule()" class="btn btn-default" ng-disabled="addmodule.$invalid">{{phrase.addmodule}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  Edit Module to learnpath ==================================== -->
+
+<section class="content" ng-show="views.moduleEdit">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelEdit}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.editmodule}}</h3>
+    </div>
+    <div class="box-body table-responsive learnpath">
+      <form class="form-horizontal" name="editmodule" role="form" ng-submit="savemoduleEdit()" novalidate>
+        <div class="form-group" ng-class="{'has-error': editmodule.moduleTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.moduletitle}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="moduleTitle" ng-model="form.moduleTitle" class="form-control" required placeholder="{{phrase.moduletitle}}">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editmodule.mdClasses.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-checked="class.selected == 'selected'" ng-change="checkToggle();subjectList();levelpathlevel();selectAssgnOnexm()" name="mdClasses[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.mdClasses" name="mdClasses" required="">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editmodule.subject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.subject" required name="subject" ng-change="subjectList();levelpathlevel();selectAssgnOnexm()">
+              <option ng-repeat="subjectOne in subject" ng-selected="subjectOne.id == form.subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="gradelevelset" class="form-group" ng-class="{'has-error': editmodule.gradelevel.$invalid}">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.gradelevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.gradelevel" name="gradelevel" required ng-change="subjectList();levelpathlevel();selectAssgnOnexm()">
+              <option ng-repeat="level in gradelevels" value="{{level.gid}}" ng-selected="level.gid == form.levelValue">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div id="yearlevelset" class="form-group" ng-class="{'has-error': editmodule.yearlevel.$invalid}">
+           <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} * </label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.yearlevel" name="yearlevel" required ng-change="subjectList();levelpathlevel();selectAssgnOnexm()">
+              <option ng-repeat="yearlevel in yearlevels" ng-selected="yearlevel.id == form.levelValue" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+          
+        <div class="form-group" ng-class="{'has-error': editmodule.assignments.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.selectassignments}} *</label>
+          <div class="col-sm-10">
+              <div class="col-md-3" ng-class="{'has-error': editmodule.assignments.$invalid}">
+              <select class="form-control" ng-model="form.assignment" name="assignments">
+                <option ng-repeat="assignment in assignments" ng-selected="assignment.id == assignmentadded.id" value="{{assignment.id}}">{{assignment.AssignTitle}}</option>
+              </select>
+              </div>
+              <div class="col-md-3" ng-class="{'has-error': editmodule.requirement.$invalid}">
+              <select class="form-control" ng-model="form.requirement" name="requirements">
+                <option value="1">{{phrase.mandatory}}</option>
+                <option value="2">{{phrase.optional}}</option>
+              </select>
+            </div>
+            <div class="col-md-3 btnblock">
+                <a class="btn btn-danger btn-flat pull-left marginBottom15 ng-binding" ng-click="addAssignmentData()">{{phrase.AddAssignments}}</a>
+                <a class="btn btn-success btn-flat pull-left marginleftright20 ng-binding" ng-click="addAssign()">{{phrase.addnewassign}}</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group" ng-class="{'has-error': editmodule.onlineExams.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.selectonlineexams}} *</label>
+          <div class="col-sm-10">
+            <div class="col-md-3" ng-class="{'has-error': editmodule.onlineExams.$invalid}">
+              <select class="form-control" ng-model="form.onlineExams" name="onlineExams">
+                <option ng-repeat="onlineexam in onlineexams" ng-selected="onlineexam.id == onexmadded.id" value="{{onlineexam.id}}">{{onlineexam.examTitle}}</option>
+              </select>
+            </div>
+            <div class="col-md-3" ng-class="{'has-error': editmodule.requirements.$invalid}">
+              <select class="form-control" ng-model="form.oexrequirement" name="requirements">
+                <option value="1">{{phrase.mandatory}}</option>
+                <option value="2">{{phrase.optional}}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+                <a class="btn btn-danger btn-flat pull-left marginBottom15 ng-binding" ng-click="addOnlineExamData()">{{phrase.addExam}}</a>
+                <a class="btn btn-success btn-flat pull-left marginleftright20 ng-binding" ng-click="addNewExams()">{{phrase.addnewexam}}</a>
+            </div>
+          </div>
+        </div>
+          
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label"></label>
+          <div class="col-sm-10">
+            <div id="setsequence">
+            <div class="panel panel-default">
+              <!-- /.panel-heading -->
+              <div class="panel-body">
+                  <div class="table-responsive learnpath">
+                      <input type="hidden" id="controllername" value="{{ controllerName }}" />
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{phrase.name}}</th>
+                            <th>{{phrase.requirement}}</th>
+                            <th>{{phrase.sortorder}}</th>
+                            <th>{{phrase.Operations}}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editblock" class="assgonexlist" ng-model="form.assignmentsList">
+                        <tr ng-repeat="mdlist in form.modulesetlist" class="aasgnlist" id="editblock-{{$index}}-{{mdlist.setid}}-{{mdlist.mixid}}">
+                            <td>
+                                <div ng-if="mdlist.setid =='assid'" id="edit-{{mdlist.assId}}" onclick="assignmentEdit(this.id)">{{ mdlist.asstitle }}</div>
+                                <div ng-if="mdlist.setid =='oexid'" id="edit-{{mdlist.oexId}}" onclick="editOnlineExam(this.id)">{{ mdlist.oextitle }}</div>
+                            </td>
+                            <td>
+                                <div ng-if="mdlist.setid =='assid'">{{ (mdlist.assreq == 1)? phrase.mandatory:phrase.optional }} </div>
+                                <div ng-if="mdlist.setid =='oexid'">{{ (mdlist.oexreq == 1)? phrase.mandatory:phrase.optional }}  </div>
+                            </td>
+                            <td id="edit-{{$index}}-td">
+                                <input type="hidden" value="{{ mdlist.mixid }}" class="inputtypeid" />
+                                <input type="hidden" value="{{ mdlist.setid }}" class="inputtypesf" />
+                                <span id="edit-{{$index}}-{{mdlist.setid}}-{{mdlist.mixid}}" onclick="moveblockdown(this.id,'edit')" class="movearrow movedown"><i class="fa fa-angle-down"></i></span>
+                                <span id="edit-{{$index}}-{{mdlist.setid}}-{{mdlist.mixid}}" onclick="moveblockup(this.id,'edit')" class="movearrow moveup"><i class="fa fa-angle-up"></i></span>
+                                <span ng-if="mdlist.setid =='assid'" ><input type="hidden" value="{{$index}}" id="edit-sortorder-{{$index}}" class="form-control sortorder" ng-blur="editAssignSort(mdlist,index,$index)" /></span>
+                                <span ng-if="mdlist.setid =='oexid'" ><input type="hidden" value="{{$index}}" id="edit-sortorder-{{$index}}" class="form-control sortorder" ng-blur="editOnExSort(mdlist,index,$index)" /></span>
+                            </td>
+                            <td>
+                                <input type="hidden" value="{{mdlist}}" id="edit-fulldata-{{$index}}" />
+                                <a ng-if="mdlist.setid =='assid'" href="" id="edit-{{mdlist.mixid}}" onclick="removeAssignment(this.id)" class="label bg-aqua">{{phrase.Remove}}</a>
+                                <a ng-if="mdlist.setid =='oexid'" href="" id="edit-{{mdlist.mixid}}" onclick="removeOnlineExam(this.id)" class="label bg-aqua">{{phrase.Remove}}</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                  </div>
+                  <!-- /.table-responsive -->
+              </div>
+              <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+          </div>
+        </div>
+        </div>
+          
+        <div class="form-group" ng-class="{'has-error': editmodule.tag.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.tag}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="tag" ng-model="form.tag" class="form-control" placeholder="{{phrase.tag}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" ng-disabled="editmodule.$invalid">{{phrase.editmodule}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  add assignment to learnpath ==================================== -->
+
+<section id="addnewassign" class="addnewmodule"> 
+ <div class="box col-xs-12">
+     <a ng-click="closeBlock()" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15"><i class="fa fa-times"></i></a>
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.AddAssignments}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="addassign" role="form" ng-submit="saveAdd()" novalidate>
+         <div class="form-group" ng-class="{'has-error': addassign.AssignTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.AssignmentTitle}} * </label>
+            <div class="col-sm-10">
+              <input type="text" name="AssignTitle" ng-model="form.AssignTitle" class="form-control" required placeholder="{{phrase.AssignmentTitle}}">
+            </div>
+         </div>
+         <div class="form-group" ng-class="{'has-error': addDorm['classId[]'].$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} * </label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-checked="class.selected == 'selected'" ng-change="adasgcheckToggle();asexsubjectList('assignment')" name="classId[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.classId" name="classId" required="">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': addDorm.subjectId.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.assubjectId" required name="subjectId">
+              <option ng-repeat="subjectOne in subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div> 
+        <div class="form-group" ng-class="{'has-error': editDorm.level.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.level}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.level" required name="level">
+              <option ng-repeat="level in gradelevels" ng-selected="level.gid == form.level" value="{{level.gid}}" ng-selected="level.gid == form.level">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm.yearlevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.ylevel" required name="yearlevel">
+              <option ng-repeat="yearlevel in yearlevels" value="{{yearlevel.id}}" ng-selected="yearlevel.id == form.yearlevel">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+         <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="button" ng-click="addnewAssign()" class="btn btn-default" ng-disabled="addassign.$invalid">{{phrase.AddAssignments}}</button>
+          </div>
+        </div>
+      </form>
+  </div>
+</section>
+<!-- ===============================  Add exam to learnpath ==================================== -->
+
+
+<section id="addnewexam" class="addnewmodule"> 
+<div class="box col-xs-12">
+     <a ng-click="closeBlock()" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15"><i class="fa fa-times"></i></a>
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.addExam}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="addExam" role="form" ng-submit="saveAdd()" novalidate>
+        <div class="form-group" ng-class="{'has-error': addExam.examTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.examName}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="examTitle" ng-model="form.examTitle" class="form-control" required placeholder="{{phrase.examName}}">
+          </div>
+        </div>
+          <div class="form-group" ng-class="{'has-error': addExam.examClass.$invalid}">
+              <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-checked="class.selected == 'selected'" ng-change="adasgcheckToggle();asexsubjectList('exam')" name="classId[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.classId" name="classId" required="">
+          </div>
+        </div>
+       <div class="form-group" ng-class="{'has-error': addExam.examSubject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addonexexamSubject" required name="addexamSubject">
+              <option ng-repeat="subjectOne in subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+         <div class="form-group" ng-class="{'has-error': addDorm.gradelevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.level}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addonexgradelevel" required name="gradelevel">
+              <option ng-repeat="level in gradelevels" value="{{level.gid}}">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': addDorm.yearlevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.addonexylevel" required name="yearlevel">
+              <option ng-repeat="yearlevel in yearlevels" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="button" ng-click="addnewExam()" class="btn btn-default" ng-disabled="addExam.$invalid">{{phrase.addExam}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="content" ng-show="views.scheduleitemlist">
+    <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <div class="box col-xs-12">
+      <div class="box-header">
+          <h3 class="box-title">&nbsp;</h3>
+      </div>
+      <div class="box-body table-responsive">
+          <table class="table table-hover">
+              <tbody>
+              <tr>
+
+                  <th>{{phrase.title}}</th>
+                  <th>{{phrase.Operations}}</th>
+              </tr>
+              <tr>
+                  <td>{{phrase.Assignments}}</td>
+                  <td>  
+                    <a ng-click="setAssgnschedule(learnpathid)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-calendar"></i></a>
+                  </td>
+              </tr>
+              <tr>
+                  <td>{{phrase.Onlineexams}}</td>
+                  <td>  
+                    <a ng-click="setOnexschedule(learnpathid)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-calendar"></i></a>
+                  </td>
+              </tr>
+          </tbody></table>
+      </div>
+  </div>
+</section>
+
+<!-- ===============================  Assignment Schedule for learnpath ==================================== -->
+
+<section class="content" ng-show="views.scheduleAssgnlist">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <div class="box col-xs-12">
+      <div class="box-header">
+          <h3 class="box-title">{{phrase.listAssignments}}</h3>
+          <div class="box-tools">
+              <div class="input-group">
+                <input type="text" name="table_search" ng-model="searchText" placeholder="{{phrase.Search}}" class="form-control input-sm">
+                <span class="input-group-addon"><i class="fa fa-search"></i></span>
+              </div>
+          </div>
+      </div>
+      <div class="box-body table-responsive">
+          <table class="table table-hover">
+              <tbody>
+              <tr>
+                  <!--<th>{{phrase.ID}}</th>-->
+                  <th>{{phrase.AssignmentTitle}}</th>
+                  <!--<th>{{phrase.AssignmentDescription}}</th>-->
+                  <th>{{phrase.AssignmentDeadline}}</th>
+                  <th>{{phrase.timeset}}</th>
+                  <th>{{phrase.Operations}}</th>
+              </tr>
+              <tr ng-repeat="assignment in getLpAssign | filter:subjectText | filter:yearlevelText | filter:levelText">
+                  <td>{{assignment.AssignTitle}}</td>
+                  <td>{{assignment.AssignDeadLine}}</td>
+                  <td>{{assignment.asgnTime}}</td>
+                  <td>  
+                    <a ng-click="AssgnSchedule(assignment.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-plus"></i></a>
+                    <a ng-if="assignment.id !='' " ng-click="removeAssgnSchedule(assignment,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.Remove}}" tooltip><i class="fa fa-trash-o"></i></a>
+                  </td>
+              </tr>
+              <tr ng-show="assignments.length == '0'"><td class="noTableData" colspan="6">{{phrase.noAssignments}}</td></tr>
+          </tbody></table>
+      </div>
+  </div>
+</section>
+
+<!-- ===============================  View Assignment Schedule ==================================== -->
+
+<section class="content" ng-show="views.AssgnSchedule">
+  <a ng-click="viewLearnPath(learnpathid)" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelAdd}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.AddAssignments}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="setSchedule" role="form" ng-submit="saveAssgnSchedule(form.asgnid)" novalidate>
+        <div class="form-group" ng-class="{'has-error': setSchedule.AssignTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.AssignmentTitle}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="AssignTitle" ng-model="form.AssignTitle" class="form-control" readonly placeholder="{{phrase.AssignmentTitle}}">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': setSchedule.AssignDeadLine.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.AssignmentDeadline}} *</label>
+          <div class="col-sm-10">
+            <input type="text" id="datemask" name="AssignDeadLine" ng-model="form.AssignDeadLine" required class="form-control datemask">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': setSchedule.asgnTime.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.timeset}} * </label>
+          <div class="col-sm-10">
+<!--               <input id="asgnTime" ng-model="form.asgnTime" class="form-control" required timepicker/>-->
+            <select class="form-control" ng-model="form.asgnTime" required name="asgnTime">
+                <option value="8.00">8.00</option>
+                <option value="9.00">9.00</option>
+                <option value="10.00">10.00</option>
+                <option value="11.00">11.00</option>
+                <option value="12.00">12.00</option>
+                <option value="13.00">13.00</option>
+                <option value="14.00">14.00</option>
+                <option value="15.00">15.00</option>
+                <option value="16.00">16.00</option>
+                <option value="17.00">17.00</option>
+                <option value="18.00">18.00</option>
+            </select>
+          </div>
+        </div>
+        <div date-picker selector=".datemask" ></div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="submit" class="btn btn-default" ng-disabled="setSchedule.$invalid">{{phrase.addschedule}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  Online Exam List ==================================== -->
+
+<section class="content" ng-show="views.scheduleOnexmlist">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <a ng-if="userRole == 'admin' || userRole == 'teacher'" ng-click="changeView('add')" class="floatRTL btn btn-success btn-flat pull-right marginBottom15">{{phrase.AddAssignments}}</a>
+  <div class="box col-xs-12">
+      <div class="box-header">
+          <h3 class="box-title">{{phrase.listAssignments}}</h3>
+          <div class="box-tools">
+              <div class="input-group">
+                <input type="text" name="table_search" ng-model="searchText" placeholder="{{phrase.Search}}" class="form-control input-sm">
+                <span class="input-group-addon"><i class="fa fa-search"></i></span>
+              </div>
+          </div>
+      </div>
+      <div class="box-body table-responsive">
+          <table class="table table-hover">
+              <tbody>
+              <tr>
+                  <!--<th>{{phrase.ID}}</th>-->
+                  <th>{{phrase.examName}}</th>
+                  <!--<th>{{phrase.AssignmentDescription}}</th>-->
+                  <th>{{phrase.examDeadline}}</th>
+                  <th>{{phrase.timeset}}</th>
+                  <th>{{phrase.Operations}}</th>
+              </tr>
+              <tr ng-repeat="onexams in getLpOnexm | filter:subjectText | filter:yearlevelText | filter:levelText">
+                  <td>{{onexams.examTitle}}</td>
+                  <td>{{onexams.OnexDeadLine}}</td>
+                  <td>{{onexams.examTime}}</td>
+                  <td>  
+                    <a ng-click="OnExSchedule(onexams.id)" type="button" class="btn btn-info btn-flat" title="{{phrase.addschedule}}" tooltip><i class="fa fa-plus"></i></a>
+                    <a ng-if="onexams.id !='' " ng-click="removeOnexSchedule(onexams,$index)" type="button" class="btn btn-danger btn-flat" title="{{phrase.Remove}}" tooltip><i class="fa fa-trash-o"></i></a>
+                  </td>
+              </tr>
+              <tr ng-show="onlineexams.length == '0'"><td class="noTableData" colspan="6">{{phrase.noExams}}</td></tr>
+          </tbody></table>
+      </div>
+  </div>
+</section>
+
+<!-- ===============================  Online exam Schedule ==================================== -->
+
+<section class="content" ng-show="views.OnlineexamSchedule">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.moveback}}</a>
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelAdd}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.setschedule}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="OnlineexamSchedule" role="form" ng-submit="saveOnexSchedule(form.onexid)" novalidate>
+        <div class="form-group" ng-class="{'has-error': OnlineexamSchedule.examTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.examName}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="AssignTitle" ng-model="form.examTitle" class="form-control" readonly placeholder="{{phrase.examTitle}}">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': OnlineexamSchedule.OnexDeadLine.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.endTime}} *</label>
+          <div class="col-sm-10">
+            <input type="text" id="datemask" name="OnexDeadLine" ng-model="form.OnexDeadLine" required class="form-control datemask">
+          </div>
+        </div>
+        <div date-picker selector=".datemask" ></div>
+        
+        <div class="form-group" ng-class="{'has-error': OnlineexamSchedule.examTime.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.timeset}} * </label>
+          <div class="col-sm-10">
+               <!--<input id="examTime" ng-model="form.examTime" class="form-control" required timepicker/>-->
+          </div>
+          <div class="col-sm-10">
+                <select class="form-control" ng-model="form.examTime" required name="examTime">
+                    <option value="8.00">8.00</option>
+                    <option value="9.00">9.00</option>
+                    <option value="10.00">10.00</option>
+                    <option value="11.00">11.00</option>
+                    <option value="12.00">12.00</option>
+                    <option value="13.00">13.00</option>
+                    <option value="14.00">14.00</option>
+                    <option value="15.00">15.00</option>
+                    <option value="16.00">16.00</option>
+                    <option value="17.00">17.00</option>
+                    <option value="18.00">18.00</option>
+                </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="submit" class="btn btn-default" ng-disabled="OnlineexamSchedule.$invalid">{{phrase.addschedule}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  Edit Assignment ==================================== -->
+
+<section class="content" ng-show="views.editAssignment">
+  <a ng-click="moduleEdit(modid)" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelEdit}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.editAssignment}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="editDorm" role="form"  ng-upload="saveEditAssignment(content)" role="form" method="post" action="{{'assignments/' + form.id}}" novalidate>
+        <div class="form-group" ng-class="{'has-error': editDorm.AssignTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.AssignmentTitle}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="AssignTitle" ng-model="form.AssignTitle" class="form-control" required placeholder="{{phrase.AssignmentTitle}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.AssignmentDescription}}</label>
+          <div class="col-sm-10">
+            <textarea name="AssignDescription" class="form-control" ng-model="form.AssignDescription" placeholder="{{phrase.AssignmentDescription}}" ck-editor></textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.AssignmentFile}}</label>
+          <div class="col-sm-10">
+            <input type="file" name="AssignFile">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm['classId[]'].$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}} *</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-checked="class.selected == 'selected'" ng-change="checkToggle();subjectList();levelpathlevel()" name="classId[]"> {{class.className}}<br>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm.subjectId.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.subjectId" required name="subjectId">
+              <option ng-repeat="subjectOne in subject" value="{{subjectOne.id}}" ng-selected="subjectOne.id == form.subjectId">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm.level.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.level}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.level" required name="level">
+              <option ng-repeat="level in gradelevels" ng-selected="level.gid == form.level" value="{{level.gid}}" ng-selected="level.gid == form.level">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm.yearlevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.yearlevel" required name="yearlevel">
+              <option ng-repeat="yearlevel in yearlevels" value="{{yearlevel.id}}" ng-selected="yearlevel.id == form.yearlevel">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editDorm.tag.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.tag}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="tag" ng-model="form.tag" class="form-control" placeholder="{{phrase.tag}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <input type="hidden" name="_token" value="{{CSRF_TOKEN}}">
+            <button type="submit" class="btn btn-default" ng-disabled="editDorm.$invalid">{{phrase.editAssignment}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  Edit Online Exam ==================================== -->
+
+<section class="content" ng-show="views.editOnlineExam">
+  <a ng-click="moduleEdit(modid)" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.cancelEdit}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">{{phrase.editExam}}</h3>
+    </div>
+    <div class="box-body table-responsive">
+      <form class="form-horizontal" name="editExam" role="form" ng-submit="saveEditOnlineExam()" novalidate>
+        <div class="form-group" ng-class="{'has-error': editExam.examTitle.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.examName}} * </label>
+          <div class="col-sm-10">
+            <input type="text" name="examTitle" ng-model="form.examTitle" class="form-control" required placeholder="{{phrase.examName}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.examDesc}}</label>
+          <div class="col-sm-10">
+            <textarea name="examDescription" class="form-control" ng-model="form.examDescription" placeholder="{{phrase.examDesc}}"></textarea>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.examClass.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.class}}</label>
+          <div class="col-sm-10">
+            <div class="multicheckbox">
+              <span  ng-repeat="class in classes">
+                <input type="checkbox" value="{{class.id}}" ng-model="class.selected" ng-checked="class.selected == 'selected'" ng-change="checkToggle();subjectList();levelpathlevel()" name="examClass[]"> {{class.className}}<br>
+              </span>
+            </div>
+            <input type="hidden" value="{{teacher.id}}" ng-model="form.examClass" name="examClass" required="">
+            
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.examSubject.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Subject}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.examSubject" required name="examSubject">
+              <option ng-selected="form.examSubject == subjectOne.id" ng-repeat="subjectOne in subject" value="{{subjectOne.id}}">{{subjectOne.subjectTitle}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.examDate.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.startTime}}</label>
+          <div class="col-sm-10">
+            <input type="text" id="datemask" name="examDate" ng-model="form.examDate" required class="form-control datemask">
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.ExamEndDate.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.endTime}}</label>
+          <div class="col-sm-10">
+            <input type="text" id="datemask" name="ExamEndDate" ng-model="form.ExamEndDate" required class="form-control datemask">
+          </div>
+        </div>
+        <div date-picker selector=".datemask" ></div>
+        <div class="form-group" ng-class="{'has-error': editExam.examTimeMinutes.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.allowedExamMin}} *</label>
+          <div class="col-sm-10">
+            <input type="text" name="examTimeMinutes" ng-model="form.examTimeMinutes" required class="form-control" >
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.examDegreeSuccess.$invalid}">
+          <label for="inputPassword3" class="col-sm-2 control-label">{{phrase.examDegreeSuccess}} *</label>
+          <div class="col-sm-10">
+            <input type="text" name="examDegreeSuccess" ng-model="form.examDegreeSuccess" required class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Extras}}</label>
+          <div class="col-sm-10">
+            <input type="checkbox" ng-model="form.ExamShowGrade" value="1" ng-checked="form.ExamShowGrade == '1'"> {{phrase.showExamGradesAfter}}
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.gradelevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.level}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.gradelevel" required name="gradelevel">
+              <option ng-repeat="level in gradelevels" value="{{level.gid}}" ng-selected="level.gid == form.gradelevel">{{level.gradeName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.yearlevel.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.yearlevel}} *</label>
+          <div class="col-sm-10">
+            <select class="form-control" ng-model="form.yearlevel" required name="yearlevel">
+              <option ng-repeat="yearlevel in yearlevels" value="{{yearlevel.id}}">{{yearlevel.title}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.Questions}}</label>
+          <div class="col-sm-10">
+
+            <div class="box-body table-responsive">
+              <div class="form-group">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.Question}}</label>
+                <div class="col-sm-11">
+                  <input type="text" name="examTitle" ng-model="examTitle" class="form-control" placeholder="{{phrase.Question}}">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.questionMark}}</label>
+                <div class="col-sm-11">
+                  <input type="text" name="questionMark" ng-model="questionMark" class="form-control" placeholder="Question mark">
+                  {{phrase.emptyOneMark}}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.questionType}}</label>
+                <div class="col-sm-11">
+                  <select class="form-control" id="examQType" ng-model="examQType">
+                    <option value="radio">{{phrase.oneOption}}</option>
+                    <option value="check">{{phrase.multipleOption}}</option>
+                    <option value="text">{{phrase.textValue}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" ng-show="examQType == 'radio'">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.Answers}} </label>
+                <div class="col-sm-2">
+                  <input type="text" name="ans1" ng-model="ans1" class="form-control" placeholder="Answer 1">
+                  <input type="radio" name="optionsRadios" value="1" ng-model="Tans"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans2" ng-model="ans2" class="form-control" placeholder="Answer 2">
+                  <input type="radio" name="optionsRadios" value="2" ng-model="Tans"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans3" ng-model="ans3" class="form-control" placeholder="Answer 3">
+                  <input type="radio" name="optionsRadios" value="3" ng-model="Tans"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans4" ng-model="ans4" class="form-control" placeholder="Answer 4">
+                  <input type="radio" name="optionsRadios" value="4" ng-model="Tans"> {{phrase.trueAns}}
+                </div>
+                <a ng-click="addQuestion()" class="col-sm-3 btn btn-danger btn-flat pull-right marginBottom15">{{phrase.addQuestion}}</a>
+              </div>
+              <div class="form-group" ng-show="examQType == 'check'">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.Answers}} </label>
+                <div class="col-sm-2">
+                  <input type="text" name="ans1" ng-model="ans1" class="form-control" placeholder="Answer 1">
+                  <input type="checkbox" name="optionsRadios" value="1" ng-model="Tans1"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans2" ng-model="ans2" class="form-control" placeholder="Answer 2">
+                  <input type="checkbox" name="optionsRadios" value="2" ng-model="Tans2"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans3" ng-model="ans3" class="form-control" placeholder="Answer 3">
+                  <input type="checkbox" name="optionsRadios" value="3" ng-model="Tans3"> {{phrase.trueAns}}
+                </div>
+                <div class="col-sm-2">
+                  <input type="text" name="ans4" ng-model="ans4" class="form-control" placeholder="Answer 4">
+                  <input type="checkbox" name="optionsRadios" value="4" ng-model="Tans4"> {{phrase.trueAns}}
+                </div>
+                <a ng-click="addQuestion()" class="col-sm-3 btn btn-danger btn-flat pull-right marginBottom15">{{phrase.addQuestion}}</a>
+              </div>
+              <div class="form-group" ng-show="examQType == 'text'">
+                <label for="inputEmail3" class="col-sm-1 control-label">{{phrase.Answers}} </label>
+                <div class="col-sm-8">
+                    <input type="text" name="ans1" ng-model="ans1" class="form-control" placeholder="Add true ansewers seperated with ,">
+                </div>
+                <a ng-click="addQuestion()" class="col-sm-3 btn btn-danger btn-flat pull-right marginBottom15">{{phrase.addQuestion}}</a>
+              </div>
+            </div>
+			<div class="row editqst">
+			  <div class="examsno">
+                <ul class="questlist list-inline">
+                    <li id="{{$index+1}}" onclick="changeTab(this.id,'edit')" ng-class="{'activefirst':$first}" ng-repeat="question in form.examQuestion">
+                        {{$index+1}}
+                    </li>
+                </ul>
+              </div>
+                <div class="examsdata">
+                    <div id="editexamsquestion-{{$index+1}}" class="col-md-12 examsquest" ng-class="{'activequest':$first}" ng-repeat="question in form.examQuestion">
+                        <div class="box box-info" ng-show="!question.type || question.type == 'radio'">
+                          <div class="box-header">
+                              <h3 class="box-title">{{phrase.infoBox}}</h3>
+                              <div class="box-tools pull-right">
+                                <a href="" ng-click="removeQuestion(question,$index)" class="label bg-aqua">{{phrase.Remove}}</a>
+                              </div>
+                          </div>
+                          <div class="box-body">
+                            <div class="form-group" ng-class="{'has-error': addExam.AssignTitle.$invalid}">
+                              <label class="col-sm-12">{{phrase.Question}}</label>
+                              <div class="col-sm-12"> {{question.title}} </div>
+                            </div>
+                            <div class="form-group" ng-class="{'has-error': addExam.AssignTitle.$invalid}">
+                              <label class="col-sm-12">Mark</label>
+                              <div class="col-sm-12"> {{question.questionMark}} </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-12">{{phrase.questionType}}</label>
+                                <div class="col-sm-12">{{phrase.oneOption}}</div>
+                            </div>
+                            <div class="form-group" ng-class="{'has-error': addExam.AssignTitle.$invalid}">
+                              <label class="col-sm-12">{{phrase.Answers}} </label>
+                              <div class="col-sm-12">
+                              {{question.ans1}} <span ng-show="question.Tans == '1'"> [{{phrase.trueAns}}]</span><br/>
+                              {{question.ans2}} <span ng-show="question.Tans == '2'"> [{{phrase.trueAns}}]</span><br/>
+                              {{question.ans3}} <span ng-show="question.Tans == '3'"> [{{phrase.trueAns}}]</span><br/>
+                              {{question.ans4}} <span ng-show="question.Tans == '4'"> [{{phrase.trueAns}}]</span>
+                              </div>
+                            </div>
+                          </div>
+                </div>
+                <div class="box box-info" ng-show="question.type == 'check'">
+                  <div class="box-header">
+                      <h3 class="box-title">{{phrase.infoBox}}</h3>
+                      <div class="box-tools pull-right">
+                        <a href="" ng-click="removeQuestion(question,$index)" class="label bg-aqua">{{phrase.Remove}}</a>
+                      </div>
+                  </div>
+                  <div class="box-body">
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.Question}}</label>
+                      <div class="col-sm-12"> {{question.title}} </div>
+                    </div>
+                    <div class="form-group" ng-class="{'has-error': addExam.AssignTitle.$invalid}">
+                      <label class="col-sm-12">Mark</label>
+                      <div class="col-sm-12"> {{question.questionMark}} </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.questionType}}</label>
+                      <div class="col-sm-12"> {{phrase.multipleOption}} </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.Answers}} </label>
+                      <div class="col-sm-12">
+                      {{question.ans1}} <span ng-show="question.Tans1"> [{{phrase.trueAns}}]</span><br/>
+                      {{question.ans2}} <span ng-show="question.Tans2"> [{{phrase.trueAns}}]</span><br/>
+                      {{question.ans3}} <span ng-show="question.Tans3"> [{{phrase.trueAns}}]</span><br/>
+                      {{question.ans4}} <span ng-show="question.Tans4"> [{{phrase.trueAns}}]</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="box box-info" ng-show="question.type == 'text'">
+                  <div class="box-header">
+                      <h3 class="box-title">{{phrase.infoBox}}</h3>
+                      <div class="box-tools pull-right">
+                        <a href="" ng-click="removeQuestion(question,$index)" class="label bg-aqua">{{phrase.Remove}}</a>
+                      </div>
+                  </div>
+                  <div class="box-body">
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.Question}}</label>
+                      <div class="col-sm-12"> {{question.title}} </div>
+                    </div>
+                    <div class="form-group" ng-class="{'has-error': addExam.AssignTitle.$invalid}">
+                      <label class="col-sm-12">Mark</label>
+                      <div class="col-sm-12"> {{question.questionMark}} </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.questionType}}</label>
+                      <div class="col-sm-12"> {{phrase.textValue}} </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-12">{{phrase.Answers}} </label>
+                      <div class="col-sm-12">
+                      {{question.ans1}}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" ng-class="{'has-error': editExam.tag.$invalid}">
+          <label for="inputEmail3" class="col-sm-2 control-label">{{phrase.tag}}</label>
+          <div class="col-sm-10">
+            <input type="text" name="tag" ng-model="form.tag" class="form-control" placeholder="{{phrase.tag}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" ng-disabled="editExam.$invalid">{{phrase.editExam}}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===============================  View Assignment Grade Feedback ==================================== -->
+
+<section class="content" ng-show="views.viewAssgnGradeFeedback">
+  <a ng-click="changeView('list')" class="floatRTL btn btn-danger btn-flat pull-right marginBottom15">{{phrase.Return}}</a>
+  <div class="box col-xs-12">
+    <div class="box-header">
+        <h3 class="box-title">Grade And Feedback Received</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-hover">
+            <tr>
+                <td>
+                    {{phrase.AssignmentTitle}}
+                </td>
+                <td>
+                    {{ gradeFeedback.AssignTitle }}
+                </td>
+            </tr>
+             <tr>
+                <td>
+                    Grade
+                </td>
+                <td>
+                    {{ gradeFeedback.gradepoint }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Feedback
+                </td>
+                <td>
+                    {{ gradeFeedback.feedback_received }}
+                </td>
+            </tr>
+        </table>
+    </div>
+  </div>
+</section>
+
+</div>
+<script>
+/* Modules related functions */
+
+
+function moveblockdown(id,block){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().moveblockdown(splitids[1],splitids[2],splitids[3],block);
+}
+    
+function moveblockup(id,block){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().moveblockup(splitids[1],splitids[2],splitids[3],block);
+}
+function assignmentEdit(id){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().assignmentEdit(splitids[1]);
+}
+function editOnlineExam(id){
+    var splitids = id.split("-")
+    angular.element(document.getElementById('controller')).scope().editOnlineExam(splitids[1]);
+}
+function removeAssignment(id){
+     var splitids = id.split("-")
+    var pid = $("#"+id).parent().parent().attr("id");
+    angular.element(document.getElementById('controller')).scope().removeAssignment(splitids[1]);
+    $("#"+pid).hide();
+}
+function removeOnlineExam(id){
+    var splitids = id.split("-")
+    var pid = $("#"+id).parent().parent().attr("id");
+    angular.element(document.getElementById('controller')).scope().removeOnlineExam(splitids[1]);
+    $("#"+pid).hide();
+}
+/* Modules related functions end */
+
+
+/* learnpath related functions */
+
+
+function lpmoveblockdown(id,block){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().lpmoveblockdown(splitids[1],block);
+}
+    
+function lpmoveblockup(id,block){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().lpmoveblockup(splitids[1],block);
+}
+function moduleEdit(id){
+    var splitids = id.split("-");
+    angular.element(document.getElementById('controller')).scope().moduleEdit(splitids[1]);
+}
+
+
+function removeModule(id){
+    var splitids = id.split("-")
+    var pid = $("#"+id).parent().parent().attr("id");
+    angular.element(document.getElementById('controller')).scope().removeModule(splitids[1]);
+    $("#"+pid).hide();
+}
+function changeTab(id,block){
+    $(".examsquest").removeClass("activequest");
+    $("#"+block+"examsquestion-"+id).addClass("activequest");
+    $(".questlist li").removeClass("activefirst");
+    $("."+block+"qst #"+id).addClass("activefirst");
+}
+    
+/* learnpath related functions end */
+</script>
+<modal visible="showModal"><div ng-bind-html="modalContent"></div></modal>
+
+
+  
